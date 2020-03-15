@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 
 import front.components.Button;
+import front.components.ChangedFilesViewerPanel;
+import front.components.HistoryFilesViewerPanel;
 
 public class MainWindow extends JFrame {
 
@@ -65,12 +67,12 @@ public class MainWindow extends JFrame {
         changesPanel.add(commitCommentsPanel, BorderLayout.SOUTH);
 
         codeEditorPanel = new JPanel();
+        codeEditorPanel.setBackground(Color.gray);
         mainPanel.add(codeEditorPanel, BorderLayout.CENTER);
     }
 
     private void setSecondComponents() {
-        noLocalChanges = new JLabel("No local changes");
-        codeEditorPanel.add(noLocalChanges);
+
     }
 
     private void setComponentsOnCommitCommentPanel() {
@@ -109,6 +111,18 @@ public class MainWindow extends JFrame {
         changesPane = new JTabbedPane();
         changesPane.setTabPlacement(JTabbedPane.TOP);
         changesPane.setPreferredSize(new Dimension(200, 400));
+        changesPane.addChangeListener(e -> {
+            codeEditorPanel.removeAll();
+            int width = codeEditorPanel.getWidth();
+            int height = codeEditorPanel.getHeight();
+            if (changesPane.getSelectedComponent() == changesPanel) {
+                codeEditorPanel.add(new ChangedFilesViewerPanel(width, height));
+                repaint();
+            } else {
+                codeEditorPanel.add(new HistoryFilesViewerPanel(width, height));
+                repaint();
+            }
+        });
 
         changesPane.addTab("Changes", changesPanel);
         changesPane.addTab("History", historyPanel);
