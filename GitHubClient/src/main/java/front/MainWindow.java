@@ -2,6 +2,10 @@ package front;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
 
 import front.components.Button;
 import front.components.ChangedFilesViewerPanel;
@@ -16,7 +20,7 @@ public class MainWindow extends JFrame {
 
     private JMenuBar menuBar;
     private Button currentRepositoryButton, currentBranchButton, fetchOriginButton, pushButton;
-    private JPanel mainPanel, commitInfoPanel, editPanel, topButtonsPanel, codeEditorPanel;
+    private JPanel mainPanel, commitInfoPanel, editPanel, topButtonsPanel, codeEditorPanel, informationCenterPanel;
 
     private JTabbedPane changesPane;
     private JPanel historyPanel, changesPanel, commitCommentsPanel;
@@ -24,12 +28,27 @@ public class MainWindow extends JFrame {
     private JTextField commitText;
     private JTextArea commitDescription;
 
-    private JLabel noLocalChanges;
+    private JLabel noLocalChanges, viewRepositoryOnGitHub, openRepositoryInExplorer;
 
-    //private JButton changesBtn, historyButton;
+    private Font headerFont;
 
     public MainWindow() {
+        initFonts();
         initFrame();
+    }
+
+    private void initFonts() {
+        try {
+            File file = new File(Objects.requireNonNull(
+                    getClass().getClassLoader().getResource("Baloo2/Baloo2-ExtraBold.ttf")).getFile());
+            GraphicsEnvironment ge =
+                    GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, file));
+
+            headerFont = new Font("Baloo 2 ExtraBold", Font.PLAIN, 30);
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setPanels() {
@@ -66,13 +85,32 @@ public class MainWindow extends JFrame {
         commitCommentsPanel.setBackground(Color.BLACK);
         changesPanel.add(commitCommentsPanel, BorderLayout.SOUTH);
 
+        //create if on program start, which check code updates
         codeEditorPanel = new JPanel();
         codeEditorPanel.setBackground(Color.gray);
-        mainPanel.add(codeEditorPanel, BorderLayout.CENTER);
+//        mainPanel.add(codeEditorPanel, BorderLayout.CENTER);
+
+        informationCenterPanel = new JPanel();
+        informationCenterPanel.setBackground(Color.CYAN);
+        informationCenterPanel.setLayout(null);
+        mainPanel.add(informationCenterPanel, BorderLayout.CENTER);
     }
 
     private void setSecondComponents() {
+        noLocalChanges = new JLabel("<html>No local changes</html>");
+        viewRepositoryOnGitHub = new JLabel(
+                "<html>Open page of your repository in browser:<br />Tap the button or press BUTTON_NAMES</html>");
+        openRepositoryInExplorer = new JLabel(
+                "<html>View the files of your repository in explorer:<br />Tap the button or press BUTTONS_NAMES</html>");
 
+        noLocalChanges.setFont(headerFont);
+        noLocalChanges.setBounds(70, 70, 600, 100);
+        openRepositoryInExplorer.setBounds(160, 260, 530, 50);
+        viewRepositoryOnGitHub.setBounds(160, 310, 530, 50);
+
+        informationCenterPanel.add(noLocalChanges);
+        informationCenterPanel.add(viewRepositoryOnGitHub);
+        informationCenterPanel.add(openRepositoryInExplorer);
     }
 
     private void setComponentsOnCommitCommentPanel() {
