@@ -4,17 +4,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Objects;
 
 import front.components.Button;
 import front.components.ChangedFilesViewerPanel;
 import front.components.HistoryFilesViewerPanel;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 
 public class MainWindow extends JFrame {
 
-    private String repositoryName = "rep-name";
+    private String repositoryName = "";
     private String branchName = "branch-name";
+    private String linkToCloneRepository;
 
     boolean checkFetchOrigin = false;
 
@@ -30,20 +33,65 @@ public class MainWindow extends JFrame {
 
     private JLabel noLocalChanges, viewRepositoryOnGitHub, openRepositoryInExplorer;
 
-    private Font headerFont;
+    private Font headerFont, preHeaderFont;
+
+    private final String repositoryPath = "C:/I-Git-Repositories/";
 
     public MainWindow() {
         initFonts();
         initFrame();
     }
 
+    private void setRepositoryUri() {
+        linkToCloneRepository = JOptionPane.showInputDialog(
+                this,
+                "Enter clone-repository link:",
+                "Repository Cloning",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void getRepositoryName() {
+        repositoryName = linkToCloneRepository.replace("https://github.com/", "")
+                .replace(".git", "")
+                .split("/", 2)[1];
+    }
+
+//    private void setPathToRepository() {
+//        JFileChooser fileChooser = new JFileChooser();
+//        fileChooser.setCurrentDirectory(new File("."));
+//        fileChooser.setDialogTitle("Choose the way:");
+//        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//        fileChooser.setAcceptAllFileFilterUsed(false);
+//
+//        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+//            pathToClonedRepository = fileChooser.getSelectedFile().getAbsolutePath();
+//        } else {
+//            pathToClonedRepository = "C:/I-Git-Repositories/";
+//        }
+//        return new File(pathToClonedRepository);
+//    }
+
+    private void cloneRepository() {
+        try {
+            File directory = new File(repositoryPath + repositoryName);
+            Git git = Git.cloneRepository().setURI(linkToCloneRepository).setDirectory(directory).call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void initFonts() {
         try {
-            File file = new File(Objects.requireNonNull(
-                    getClass().getClassLoader().getResource("Baloo2/Baloo2-ExtraBold.ttf")).getFile());
-            GraphicsEnvironment ge =
-                    GraphicsEnvironment.getLocalGraphicsEnvironment();
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, file));
+            String[] fontPath = new String[] {
+                    "Baloo2/Baloo2-ExtraBold.ttf", "Baloo2/Baloo2-Bold.ttf", "Baloo2/Baloo2-Regular.ttf"};
+
+            for (String s : fontPath) {
+                File file = new File(Objects.requireNonNull(
+                        getClass().getClassLoader().getResource(s)).getFile());
+                GraphicsEnvironment ge =
+                        GraphicsEnvironment.getLocalGraphicsEnvironment();
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, file));
+            }
 
             headerFont = new Font("Baloo 2 ExtraBold", Font.PLAIN, 30);
         } catch (FontFormatException | IOException e) {
@@ -58,7 +106,7 @@ public class MainWindow extends JFrame {
 
         commitInfoPanel = new JPanel();
         commitInfoPanel.setLayout(new BorderLayout());
-        commitInfoPanel.setPreferredSize(new Dimension(200, 600));
+        commitInfoPanel.setPreferredSize(new Dimension(301, 600));
 
         mainPanel.add(commitInfoPanel, BorderLayout.WEST);
 
@@ -129,26 +177,26 @@ public class MainWindow extends JFrame {
 
     private void setButtonsOnTopPanel() {
         currentRepositoryButton = new Button("<html>Current repository<br />" + repositoryName + "</html>");
-        currentRepositoryButton.setBounds(1, 0, 200, 50);
+        currentRepositoryButton.setBounds(1, 0, 300, 50);
         topButtonsPanel.add(currentRepositoryButton);
 
         currentBranchButton = new Button("<html>Current branch<br />" + branchName + "</html>");
-        currentBranchButton.setBounds(202, 0, 200, 50);
+        currentBranchButton.setBounds(302, 0, 200, 50);
         topButtonsPanel.add(currentBranchButton);
 
         fetchOriginButton = new Button("<html>Fetch origin<br />" + checkFetchOrigin + "</html>");
-        fetchOriginButton.setBounds(403, 0, 200, 50);
+        fetchOriginButton.setBounds(503, 0, 200, 50);
         topButtonsPanel.add(fetchOriginButton);
 
         pushButton = new Button("Pull origin");
-        pushButton.setBounds(604, 0, 200, 50);
+        pushButton.setBounds(704, 0, 200, 50);
         topButtonsPanel.add(pushButton);
     }
 
     private void setComponentsOnChangesPanel() {
         changesPane = new JTabbedPane();
         changesPane.setTabPlacement(JTabbedPane.TOP);
-        changesPane.setPreferredSize(new Dimension(200, 400));
+        changesPane.setPreferredSize(new Dimension(301, 400));
         changesPane.addChangeListener(e -> {
             codeEditorPanel.removeAll();
             int width = codeEditorPanel.getWidth();
@@ -178,6 +226,18 @@ public class MainWindow extends JFrame {
 
         JMenuItem newRepository = new JMenuItem("Create new repository...");
         JMenuItem cloneRepository = new JMenuItem("Clone repository...");
+        cloneRepository.addActionListener(e -> {
+            try {
+                setRepositoryUri();
+                getRepositoryName();
+                cloneRepository();
+                JOptionPane.showMessageDialog(
+                        this, "Cloning success", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (JGitInternalException ex) {
+                JOptionPane.showMessageDialog(
+                        this, "Error (code: 001)", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
         JMenuItem options = new JMenuItem("Options...");
         JMenuItem exit = new JMenuItem("Exit");
 
