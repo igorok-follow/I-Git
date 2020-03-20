@@ -56,21 +56,6 @@ public class MainWindow extends JFrame {
                 .split("/", 2)[1];
     }
 
-//    private void setPathToRepository() {
-//        JFileChooser fileChooser = new JFileChooser();
-//        fileChooser.setCurrentDirectory(new File("."));
-//        fileChooser.setDialogTitle("Choose the way:");
-//        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-//        fileChooser.setAcceptAllFileFilterUsed(false);
-//
-//        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-//            pathToClonedRepository = fileChooser.getSelectedFile().getAbsolutePath();
-//        } else {
-//            pathToClonedRepository = "C:/I-Git-Repositories/";
-//        }
-//        return new File(pathToClonedRepository);
-//    }
-
     private void cloneRepository() {
         try {
             File directory = new File(repositoryPath + repositoryName);
