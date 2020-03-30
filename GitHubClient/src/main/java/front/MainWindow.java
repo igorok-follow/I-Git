@@ -2,9 +2,9 @@ package front;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Objects;
+import java.util.Scanner;
 
 import front.components.Button;
 import front.components.ChangedFilesViewerPanel;
@@ -12,11 +12,13 @@ import front.components.HistoryFilesViewerPanel;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 public class MainWindow extends JFrame {
 
     private String repositoryName = "";
-    private String branchName = "branch-name";
+    private String branchName = "";
     private String linkToCloneRepository;
 
     boolean checkFetchOrigin = false;
@@ -36,10 +38,55 @@ public class MainWindow extends JFrame {
     private Font headerFont, preHeaderFont;
 
     private final String repositoryPath = "C:/I-Git-Repositories/";
+    private final String pathToTempDirectory = "src/main/java/temp/openedRepository";
 
     public MainWindow() {
+        getOpenedRepository();
         initFonts();
         initFrame();
+        setButtonsText();
+    }
+
+    private void createNewEmptyRepository(String name) {
+        try {
+            Git.init().setDirectory(new File("C:/I-Git-Repositories")).call();
+            System.out.println("WORK SUKA");
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setButtonsText() {
+        currentRepositoryButton.setText("<html>Current repository:<br />" + repositoryName + "</html>");
+        currentBranchButton.setText("<html>Current branch:<br />" + branchName + "</html>");
+        repaint();
+    }
+
+    private void setOpenedRepository() {
+        try {
+            FileWriter fileWriter = new FileWriter(pathToTempDirectory);
+            fileWriter.write(repositoryName + "/" + branchName);
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getOpenedRepository() {
+        File file = new File(pathToTempDirectory);
+        Scanner sc;
+        try {
+            sc = new Scanner(file);
+            String fileContent = sc.nextLine();
+            repositoryName = fileContent.split("/", 2)[0];
+            branchName = fileContent.split("/", 2)[1];
+        } catch (FileNotFoundException e) {
+            JOptionPane.showMessageDialog(
+                    this, "Error 002: App-file (openedRepository.file) not found", "Error", JOptionPane.ERROR_MESSAGE);
+            repositoryName = "none";
+            branchName = "none";
+        }
     }
 
     private void setRepositoryUri() {
@@ -51,16 +98,27 @@ public class MainWindow extends JFrame {
     }
 
     private void getRepositoryName() {
-        repositoryName = linkToCloneRepository.replace("https://github.com/", "")
-                .replace(".git", "")
-                .split("/", 2)[1];
+        try {
+            repositoryName = linkToCloneRepository.replace("https://github.com/", "")
+                    .replace(".git", "")
+                    .split("/", 2)[1];
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error 003: Incorrect link", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void cloneRepository() {
         try {
+            setRepositoryUri();
+            getRepositoryName();
             File directory = new File(repositoryPath + repositoryName);
             Git git = Git.cloneRepository().setURI(linkToCloneRepository).setDirectory(directory).call();
-        } catch (GitAPIException e) {
+            Repository repository = git.getRepository();
+            branchName = repository.getBranch();
+            System.out.println("getDirectory(): " + repository.getDirectory());
+            setOpenedRepository();
+            setButtonsText();
+        } catch (GitAPIException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -161,15 +219,15 @@ public class MainWindow extends JFrame {
     }
 
     private void setButtonsOnTopPanel() {
-        currentRepositoryButton = new Button("<html>Current repository<br />" + repositoryName + "</html>");
+        currentRepositoryButton = new Button("<html>Current repository<br /></html>");
         currentRepositoryButton.setBounds(1, 0, 300, 50);
         topButtonsPanel.add(currentRepositoryButton);
 
-        currentBranchButton = new Button("<html>Current branch<br />" + branchName + "</html>");
+        currentBranchButton = new Button("<html>Current branch<br /></html>");
         currentBranchButton.setBounds(302, 0, 200, 50);
         topButtonsPanel.add(currentBranchButton);
 
-        fetchOriginButton = new Button("<html>Fetch origin<br />" + checkFetchOrigin + "</html>");
+        fetchOriginButton = new Button("<html>Fetch origin<br /></html>");
         fetchOriginButton.setBounds(503, 0, 200, 50);
         topButtonsPanel.add(fetchOriginButton);
 
@@ -210,17 +268,19 @@ public class MainWindow extends JFrame {
         menuBar.add(repository);
 
         JMenuItem newRepository = new JMenuItem("Create new repository...");
+        newRepository.addActionListener(e -> {
+            createNewEmptyRepository("test");
+        });
         JMenuItem cloneRepository = new JMenuItem("Clone repository...");
         cloneRepository.addActionListener(e -> {
             try {
-                setRepositoryUri();
-                getRepositoryName();
                 cloneRepository();
                 JOptionPane.showMessageDialog(
                         this, "Cloning success", "Success", JOptionPane.INFORMATION_MESSAGE);
+                repaint();
             } catch (JGitInternalException ex) {
                 JOptionPane.showMessageDialog(
-                        this, "Error (code: 001)", "Error", JOptionPane.ERROR_MESSAGE);
+                        this, "Error 001: Directory exist", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
         JMenuItem options = new JMenuItem("Options...");

@@ -1,1 +1,6 @@
-001 - Директория уже существует и надо с ней что то юзеру решить
+Error 001: This directory is exist
+    delete repository and create or clone he with start
+Error 002: App-file (openedRepository.file) not found
+    clone or create any repository
+Error 002: Incorrect link
+    check validity of entered link
