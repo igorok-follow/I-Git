@@ -49,9 +49,16 @@ public class MainWindow extends JFrame {
 
     private void createNewEmptyRepository(String name) {
         try {
-            Git.init().setDirectory(new File("C:/I-Git-Repositories")).call();
-            System.out.println("WORK SUKA");
-        } catch (GitAPIException e) {
+            String way = "C:/I-Git-Repositories/" + name;
+            Git.init().setDirectory(new File(way)).call();
+            FileWriter fileWriter = new FileWriter(way + "/" + ".gitattributes");
+            fileWriter.write("* text=auto");
+            fileWriter.flush();
+            fileWriter.close();
+            repositoryName = name;
+            setOpenedRepository();
+            setButtonsText();
+        } catch (GitAPIException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -107,18 +114,21 @@ public class MainWindow extends JFrame {
         }
     }
 
+    private void gitCloneRepository() throws IOException, GitAPIException {
+        File directory = new File(repositoryPath + repositoryName);
+        Git git = Git.cloneRepository().setURI(linkToCloneRepository).setDirectory(directory).call();
+        Repository repository = git.getRepository();
+        branchName = repository.getBranch();
+    }
+
     private void cloneRepository() {
         try {
             setRepositoryUri();
             getRepositoryName();
-            File directory = new File(repositoryPath + repositoryName);
-            Git git = Git.cloneRepository().setURI(linkToCloneRepository).setDirectory(directory).call();
-            Repository repository = git.getRepository();
-            branchName = repository.getBranch();
-            System.out.println("getDirectory(): " + repository.getDirectory());
+            gitCloneRepository();
             setOpenedRepository();
             setButtonsText();
-        } catch (GitAPIException | IOException e) {
+        } catch (IOException | GitAPIException e) {
             e.printStackTrace();
         }
     }
@@ -269,7 +279,8 @@ public class MainWindow extends JFrame {
 
         JMenuItem newRepository = new JMenuItem("Create new repository...");
         newRepository.addActionListener(e -> {
-            createNewEmptyRepository("test");
+            createNewEmptyRepository(JOptionPane.showInputDialog(this, "Enter the repository name:"));
+            setButtonsText();
         });
         JMenuItem cloneRepository = new JMenuItem("Clone repository...");
         cloneRepository.addActionListener(e -> {

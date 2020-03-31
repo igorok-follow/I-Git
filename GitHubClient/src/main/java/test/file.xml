@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<company>
+    <javalearn>
+        <courses>
+            <forbeginners id = "001">
+                <name>Course For Beginners</name>
+                <price>10$</price>
+            </forbeginners>
+            <foradvanced id = "002">
+                <name>Course For Advanced Programmers</name>
+                <price>30$</price>
+            </foradvanced>
+        </courses>
+        <merch>
+            <mike id = "103">
+                <name>Maika ebuchaya</name>
+                <price>200</price>
+            </mike>
+            <tshirt id = "101">
+                <name>With JL logo</name>
+                <price>10$</price>
+            </tshirt>
+            <joggers id = "102">
+                <name>Joggers with code-inscriptions</name>
+                <price>40$</price>
+            </joggers>
+        </merch>
+    </javalearn>
+</company>
