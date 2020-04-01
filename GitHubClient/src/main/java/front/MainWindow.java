@@ -8,16 +8,16 @@ import java.util.Scanner;
 
 import front.components.Button;
 import front.components.ChangedFilesViewerPanel;
+import front.components.CreateNewRepositoryWindow;
 import front.components.HistoryFilesViewerPanel;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 public class MainWindow extends JFrame {
 
-    private String repositoryName = "";
+    public String repositoryName = "";
     private String branchName = "";
     private String linkToCloneRepository;
 
@@ -47,29 +47,13 @@ public class MainWindow extends JFrame {
         setButtonsText();
     }
 
-    private void createNewEmptyRepository(String name) {
-        try {
-            String way = "C:/I-Git-Repositories/" + name;
-            Git.init().setDirectory(new File(way)).call();
-            FileWriter fileWriter = new FileWriter(way + "/" + ".gitattributes");
-            fileWriter.write("* text=auto");
-            fileWriter.flush();
-            fileWriter.close();
-            repositoryName = name;
-            setOpenedRepository();
-            setButtonsText();
-        } catch (GitAPIException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void setButtonsText() {
+    public void setButtonsText() {
         currentRepositoryButton.setText("<html>Current repository:<br />" + repositoryName + "</html>");
         currentBranchButton.setText("<html>Current branch:<br />" + branchName + "</html>");
         repaint();
     }
 
-    private void setOpenedRepository() {
+    public void setOpenedRepository() {
         try {
             FileWriter fileWriter = new FileWriter(pathToTempDirectory);
             fileWriter.write(repositoryName + "/" + branchName);
@@ -90,7 +74,7 @@ public class MainWindow extends JFrame {
             branchName = fileContent.split("/", 2)[1];
         } catch (FileNotFoundException e) {
             JOptionPane.showMessageDialog(
-                    this, "Error 002: App-file (openedRepository.file) not found", "Error", JOptionPane.ERROR_MESSAGE);
+                this, "Error 002: App-file (openedRepository.file) not found", "Error", JOptionPane.ERROR_MESSAGE);
             repositoryName = "none";
             branchName = "none";
         }
@@ -110,7 +94,8 @@ public class MainWindow extends JFrame {
                     .replace(".git", "")
                     .split("/", 2)[1];
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error 003: Incorrect link", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this, "Error 003: Incorrect link", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -146,7 +131,7 @@ public class MainWindow extends JFrame {
                 ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, file));
             }
 
-            headerFont = new Font("Baloo 2 ExtraBold", Font.PLAIN, 30);
+            headerFont = new Font("Baloo 2 ExtraBold", Font.PLAIN, 16);
         } catch (FontFormatException | IOException e) {
             e.printStackTrace();
         }
@@ -279,8 +264,9 @@ public class MainWindow extends JFrame {
 
         JMenuItem newRepository = new JMenuItem("Create new repository...");
         newRepository.addActionListener(e -> {
-            createNewEmptyRepository(JOptionPane.showInputDialog(this, "Enter the repository name:"));
-            setButtonsText();
+//            createNewEmptyRepository(JOptionPane.showInputDialog(this, "Enter the repository name:"));
+//            setButtonsText();
+            new CreateNewRepositoryWindow(this, 400, 457, headerFont);
         });
         JMenuItem cloneRepository = new JMenuItem("Clone repository...");
         cloneRepository.addActionListener(e -> {
