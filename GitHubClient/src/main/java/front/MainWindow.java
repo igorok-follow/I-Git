@@ -266,7 +266,7 @@ public class MainWindow extends JFrame {
         newRepository.addActionListener(e -> {
 //            createNewEmptyRepository(JOptionPane.showInputDialog(this, "Enter the repository name:"));
 //            setButtonsText();
-            new CreateNewRepositoryWindow(this, 400, 457, headerFont);
+            new CreateNewRepositoryWindow(this, getX(), getY(), getWidth(), getHeight(), headerFont);
         });
         JMenuItem cloneRepository = new JMenuItem("Clone repository...");
         cloneRepository.addActionListener(e -> {

@@ -6,20 +6,19 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 
 public class CreateNewRepositoryWindow extends JFrame {
 
     private final int FIELD_WIDTH = 352, FIELD_HEIGHT = 24;
 
-    private int width, height;
     private MainWindow owner;
+    private int ownerWidth, ownerHeight;
+    private int ownerX, ownerY;
+
+    private int childX, childY;
+    private final int childWidth = 400, childHeight = 457;
 
     private JPanel contentPanel;
 
@@ -27,7 +26,6 @@ public class CreateNewRepositoryWindow extends JFrame {
     private JTextField repositoryNameField, repositoryDescriptionField, localPathField;
     private JCheckBox initReadMeChecker;
     private JComboBox<String> licensesList;
-    private JComboBox<String> licensesBox;
     private ArrayList<String> licenses = new ArrayList<>();
     private Button accept, cancel, choosePath;
 
@@ -36,13 +34,17 @@ public class CreateNewRepositoryWindow extends JFrame {
 
     private File licensesNamesFile = new File("src/main/resources/licenses/namesOfLicenses");
 
-    public CreateNewRepositoryWindow(MainWindow owner, int width, int height, Font headerFont) {
+    public CreateNewRepositoryWindow(MainWindow owner,
+                                     int ownerX, int ownerY, int ownerWidth, int ownerHeight, Font headerFont) {
         this.headerFont = headerFont;
-        this.width = width;
-        this.height = height;
+        this.ownerX = ownerX;
+        this.ownerY = ownerY;
+        this.ownerWidth = ownerWidth;
+        this.ownerHeight = ownerHeight;
         this.owner = owner;
 
         loadLicenses();
+        initChildCoordinates();
         initWindow();
         setPanel();
         addRepositoryInfoFields();
@@ -66,9 +68,9 @@ public class CreateNewRepositoryWindow extends JFrame {
 
     private void createNewRepository() {
         if (repositoryNameField.getText() != null && localPathField.getText() != null) {
+            String name = repositoryNameField.getText();
+            String way = localPathField.getText() + name;
             try {
-                String name = repositoryNameField.getText();
-                String way = localPathField.getText() + name;
                 File repository = new File(way);
                 if (!repository.exists()) {
                     Git.init().setDirectory(new File(way)).call();
@@ -79,17 +81,48 @@ public class CreateNewRepositoryWindow extends JFrame {
                     owner.repositoryName = name;
                     owner.setOpenedRepository();
                     owner.setButtonsText();
-                    JOptionPane.showMessageDialog(
-                            this, "Repository created!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    if (licensesList.getSelectedItem() != "none") {
+                        String licenseName = Objects.
+                                requireNonNull(licensesList.getSelectedItem()).toString().
+                                replace(".", "").
+                                replace("\"", "");
+
+                        FileWriter fileWriter1;
+                        File license = new File("src/main/resources/licenses/" + licenseName);
+                        if (licenseName.contains("Apache") || licenseName.contains("BSD") ||
+                                licenseName.contains("Eclipse") || licenseName.contains("MIT")) {
+
+                            Properties p = new Properties();
+                            FileInputStream fis = new FileInputStream("src/main/resources/user_info.properties");
+                            p.load(fis);
+                            String user_name = p.getProperty("name");
+                            fis.close();
+
+                            Scanner sc = new Scanner(license);
+                            String licenseContent = "";
+                            while (sc.hasNextLine()) {
+                                licenseContent += sc.nextLine() + "\n";
+                            }
+                            licenseContent = licenseContent.replace("&yy&",
+                                    String.valueOf(Calendar.getInstance().get(Calendar.YEAR)));
+                            licenseContent = licenseContent.replace("`holders`", user_name);
+                            fileWriter1 = new FileWriter(way + "/" + "LICENSE");
+                            fileWriter1.write(licenseContent);
+                            fileWriter1.flush();
+                            fileWriter1.close();
+                            JOptionPane.showMessageDialog(
+                                    this, "Repository created!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(
+                                this, "Repository created!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(
                             this, "Error 001", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (GitAPIException | IOException ex) {
                 ex.printStackTrace();
-            }
-            if (licensesList.getSelectedItem() != "none") {
-                //create the license
             }
         }
     }
@@ -173,11 +206,16 @@ public class CreateNewRepositoryWindow extends JFrame {
         getContentPane().add(contentPanel);
     }
 
+    private void initChildCoordinates() {
+        childX = ownerX + (ownerWidth / 2) - (childWidth / 2);
+        childY = ownerY + (ownerHeight / 2) - (childHeight / 2);
+    }
+
     private void initWindow() {
         setUndecorated(true);
         setLocationRelativeTo(owner);
-        setLocation(getX() - getX() / 2, getY() - getY() / 2);
-        setSize(width, height);
+        setSize(childWidth, childHeight);
+        setLocation(childX, childY);
         setVisible(true);
     }
 
