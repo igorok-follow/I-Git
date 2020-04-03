@@ -1,6 +1,7 @@
 package front;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.*;
 import java.util.Objects;
@@ -37,14 +38,30 @@ public class MainWindow extends JFrame {
 
     private Font headerFont, preHeaderFont;
 
-    private final String repositoryPath = "C:/I-Git-Repositories/";
+    private String repositoryPath;
     private final String pathToTempDirectory = "src/main/java/temp/openedRepository";
 
     public MainWindow() {
+        getSystemDiskName();
         getOpenedRepository();
         initFonts();
         initFrame();
         setButtonsText();
+    }
+
+    private void getSystemDiskName() {
+        File[] drives = File.listRoots();
+        try {
+            FileWriter fileWriter = new FileWriter("src/main/java/temp/wayToRepositories");
+            fileWriter.write(drives[0] + "I-Git-Repositories/");
+            fileWriter.flush();
+            fileWriter.close();
+
+            repositoryPath = drives[0] + "I-Git-Repositories/";
+            System.out.println(repositoryPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setButtonsText() {
@@ -264,9 +281,8 @@ public class MainWindow extends JFrame {
 
         JMenuItem newRepository = new JMenuItem("Create new repository...");
         newRepository.addActionListener(e -> {
-//            createNewEmptyRepository(JOptionPane.showInputDialog(this, "Enter the repository name:"));
-//            setButtonsText();
             new CreateNewRepositoryWindow(this, getX(), getY(), getWidth(), getHeight(), headerFont);
+            setEnabled(false);
         });
         JMenuItem cloneRepository = new JMenuItem("Clone repository...");
         cloneRepository.addActionListener(e -> {

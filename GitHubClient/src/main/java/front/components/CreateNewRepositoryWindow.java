@@ -6,6 +6,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.*;
 
@@ -53,6 +55,7 @@ public class CreateNewRepositoryWindow extends JFrame {
         setLicensesList();
         setButtons();
         setActionsOnButtons();
+        loadWay();
     }
 
     private void loadLicenses() {
@@ -66,8 +69,20 @@ public class CreateNewRepositoryWindow extends JFrame {
         }
     }
 
+    private void loadWay() {
+        File way = new File("src/main/java/temp/wayToRepositories");
+        Scanner scanner = null;
+        try {
+            scanner = new Scanner(way);
+            localPathField.setText(scanner.nextLine());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void createNewRepository() {
-        if (repositoryNameField.getText() != null && localPathField.getText() != null) {
+        if (repositoryNameField.getText() != null &&
+                localPathField.getText() != null && localPathField.getText() != null) {
             String name = repositoryNameField.getText();
             String way = localPathField.getText() + name;
             try {
@@ -81,38 +96,11 @@ public class CreateNewRepositoryWindow extends JFrame {
                     owner.repositoryName = name;
                     owner.setOpenedRepository();
                     owner.setButtonsText();
-                    if (licensesList.getSelectedItem() != "none") {
-                        String licenseName = Objects.
-                                requireNonNull(licensesList.getSelectedItem()).toString().
-                                replace(".", "").
-                                replace("\"", "");
-
-                        FileWriter fileWriter1;
-                        File license = new File("src/main/resources/licenses/" + licenseName);
-                        if (licenseName.contains("Apache") || licenseName.contains("BSD") ||
-                                licenseName.contains("Eclipse") || licenseName.contains("MIT")) {
-
-                            Properties p = new Properties();
-                            FileInputStream fis = new FileInputStream("src/main/resources/user_info.properties");
-                            p.load(fis);
-                            String user_name = p.getProperty("name");
-                            fis.close();
-
-                            Scanner sc = new Scanner(license);
-                            String licenseContent = "";
-                            while (sc.hasNextLine()) {
-                                licenseContent += sc.nextLine() + "\n";
-                            }
-                            licenseContent = licenseContent.replace("&yy&",
-                                    String.valueOf(Calendar.getInstance().get(Calendar.YEAR)));
-                            licenseContent = licenseContent.replace("`holders`", user_name);
-                            fileWriter1 = new FileWriter(way + "/" + "LICENSE");
-                            fileWriter1.write(licenseContent);
-                            fileWriter1.flush();
-                            fileWriter1.close();
-                            JOptionPane.showMessageDialog(
-                                    this, "Repository created!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        }
+                    if (repositoryDescriptionField.getText() != null) {
+                        createDescription(repositoryDescriptionField.getText(), way);
+                    }
+                    if (licensesList.getSelectedIndex() != 0) {
+                        createLicense(way);
                     } else {
                         JOptionPane.showMessageDialog(
                                 this, "Repository created!", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -125,10 +113,70 @@ public class CreateNewRepositoryWindow extends JFrame {
                 ex.printStackTrace();
             }
         }
+        owner.setEnabled(true);
+        dispose();
+    }
+
+    private void createDescription(String description, String way) {
+        try {
+            FileWriter fileWriter = new FileWriter(way + "/.git" + "/" + "description");
+            fileWriter.write(description);
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createLicense(String way) throws IOException {
+        String licenseName = Objects.
+                requireNonNull(licensesList.getSelectedItem()).toString().
+                replace(".", "").
+                replace("\"", "");
+
+        FileWriter fileWriter;
+        File license = new File("src/main/resources/licenses/" + licenseName);
+
+        Scanner sc = new Scanner(license);
+        String licenseContent = "";
+        while (sc.hasNextLine()) {
+            licenseContent += sc.nextLine() + "\n";
+        }
+
+        if (licenseName.contains("Apache") || licenseName.contains("BSD") ||
+                licenseName.contains("Eclipse") || licenseName.contains("MIT")) {
+            Properties p = new Properties();
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream("src/main/resources/user_info.properties");
+                p.load(fis);
+                fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String user_name = p.getProperty("name");
+
+            licenseContent = licenseContent.replace("&yy&",
+                    String.valueOf(Calendar.getInstance().get(Calendar.YEAR)));
+            licenseContent = licenseContent.replace("`holders`", user_name);
+
+            fileWriter = new FileWriter(way + "/" + "LICENSE");
+            fileWriter.write(licenseContent);
+            fileWriter.flush();
+            fileWriter.close();
+            JOptionPane.showMessageDialog(
+                    this, "Repository created!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            fileWriter = new FileWriter(way + "/" + "LICENCE");
+            fileWriter.write(licenseContent);
+        }
     }
 
     private void setActionsOnButtons() {
-        cancel.addActionListener(e -> dispose());
+        cancel.addActionListener(e -> {
+            owner.setEnabled(true);
+            dispose();
+        });
         accept.addActionListener(e -> {
             createNewRepository();
         });
